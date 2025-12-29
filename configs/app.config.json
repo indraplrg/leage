@@ -1,0 +1,21 @@
+{
+  "appName": "share-notes-app",
+  "baseUrl": "http://localhost:3000",
+  "server": {
+    "port": 3000
+  },
+
+  "database": {
+    "host": "localhost",
+    "user": "emotbatu",
+    "port": 5432,
+    "databaseName": "share_notes",
+    "sslMode": "disable"
+  },
+
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "senderName": "PT. Tertimpa Batu <cherryart319@gmail.com>"
+  }
+}
