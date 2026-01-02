@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"share-notes-app/internal/container"
+	"share-notes-app/internal/middleware"
 	"share-notes-app/internal/routes"
+	"share-notes-app/pkg/cache"
 	"share-notes-app/pkg/database"
-	"share-notes-app/pkg/utils/config"
+	"share-notes-app/pkg/utils/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -17,7 +18,7 @@ func main() {
 	logger := logrus.New()
 
 	// load config
-	config, err := config.LoadConfig(logger)
+	config, err := viper.LoadConfig(logger)
 	if err != nil {
 		logger.Fatal(err)
 	} 
@@ -27,9 +28,14 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
-	logger.Info(os.Getenv("APP_DATABASE_PASSWORD"), "ini config smtp")
 	logger.Info("Berhasil terhubung ke database")
+
+	// koneksi ke redis
+	redisClient, err := cache.GetRedisConnection()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Info("Berhasil terhubung ke valkey")
 
 	// buat migrasi
 	err = database.CreateMigrationTable(db)
@@ -42,12 +48,12 @@ func main() {
 	// insialisasi rute
 	r := gin.Default()
 
+	// gunakan middleware
+	r.Use(middleware.RateLimit(redisClient))
+
 	container := container.NewContainer(db, config)
 	routes.RegisterRoutes(r, container)
 
-	logger.Info(config.SMTP, "ini config smtp")
-	logger.Info(os.Getenv("APP_SMTP_AUTH_EMAIL"), "ini config smtp")
-	logger.Info(os.Getenv("APP_SMTP_PASSWORD_EMAIL"), "ini config smtp")
 
 	// jalankan server
 	PORT := fmt.Sprintf(":%v", config.Server.Port)

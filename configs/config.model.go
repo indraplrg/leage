@@ -1,4 +1,4 @@
-package config
+package configs
 
 type Config struct {
 	AppName string `mapstructure:"appName"`
@@ -10,10 +10,7 @@ type Config struct {
 
 	Database struct {
 		Host string `mapstructure:"host"`
-		User string `mapstructure:"user"`
-		Password string `mapstrucure:"password"`
 		Port string `mapstructure:"port"`
-		DatabaseName string `mapstructure:"databaseName"`
 		SslMode string `mapstructure:"sslMode"`
 		} `mapstructure:"database"`
 
@@ -23,4 +20,8 @@ type Config struct {
 		SenderName string `mapsctructure:"senderName"`
 	} `mapstructure:"smtp"`
 
+	REDIS struct {
+		Host string `mapstructure:"host"`
+		Port int `mapstructure:"port"`
+	} `mapstructure:"redis"`
 }

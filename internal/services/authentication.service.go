@@ -2,19 +2,23 @@ package services
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/models"
 	"share-notes-app/internal/repositories"
 	"share-notes-app/pkg/auth"
 	"share-notes-app/pkg/mailer"
+	"share-notes-app/pkg/token"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type AuthenticationService interface {
-	Register(ctx context.Context, dto dtos.UserRequest) (string, error)
+	Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error)
+	Login(ctx context.Context, dto dtos.LoginRequest) (string, error)
+	Logout(ctx context.Context, data *dtos.AuthPayload) error
 }
 
 type authenticationService struct {
@@ -26,23 +30,27 @@ func NewAuthencticationService(repo repositories.AuthenticationRepository, maile
 	return &authenticationService{repo:repo, mailer:mailer}
 }
 
-func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRequest) (string, error) {
+func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error) {
 	
 	// cek email kalau terdaftar
-	existing, err := s.repo.FindByEmail(ctx, dto.Email)
+	existing, err := s.repo.FindOne(ctx, map[string]any{
+		"email" : dto.Email,
+	})
 
 	if err != nil {
-		return "", fmt.Errorf("gagal mengecek user: %w", err)
+		logrus.Info(err)
+		return nil, errors.New("gagal mengecek user")
 	}
 
 	if existing != nil {
-		return "", fmt.Errorf("Email sudah terdaftar!")
+		return nil, errors.New("Email sudah terdaftar!")
 	}
 
 	// hashing password
 	hashedPassword, err := auth.HashingPassword(dto.Password)
 	if err != nil {
-		return "", fmt.Errorf("gagal hashing password: %w", err)
+		logrus.Info(err)
+		return nil, errors.New("gagal hashing password")
 	}
 
 	// buat akun 
@@ -52,9 +60,10 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserReque
 		Password: string(hashedPassword),
 	}
 
-	err = s.repo.CreateUser(ctx, User)
+	err = s.repo.CreateOne(ctx, User)
 	if err != nil {
-		return "", fmt.Errorf("gagal membuat akun: %w", err)
+		logrus.Info(err)
+		return nil, errors.New("gagal membuat akun")
 	}
 
 
@@ -66,16 +75,87 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserReque
 		CreatedAt: time.Now(),
 	}
 
-	err = s.repo.CreateEmailVerification(ctx, emailVerification)
+	err = s.repo.CreateOne(ctx, emailVerification)
 	if err != nil {
-		return "", fmt.Errorf("Gagal membuat verifikasi token: %w", err)
+		logrus.Info(err)
+		return nil, errors.New("Gagal membuat verifikasi token")
 	}
 
 
 	// kirim verifikasi email
 	if err := s.mailer.SendVerification(dto.Email, emailVerification.Token); err != nil {
-		return "", fmt.Errorf("gagal mengirim email verifikasi: %w", err)
+		logrus.Info(err)
+		return nil, errors.New("gagal mengirim email verifikasi")
 	}
 
-	return "berhasil mengirim verifikasi ke email anda", nil
+	return User, nil
+}
+
+func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest) (string, error) {
+
+	// cek akun kalau terdaftar
+	user, err := s.repo.FindOne(ctx, map[string]any{
+		"username" : dto.Username,
+	})
+
+	if err != nil {
+		logrus.Info(err)
+		return "" ,	errors.New("gagal mengecek user")
+	}
+
+	if user == nil {
+		return "" , errors.New("account not found!")
+	}
+
+	if !user.IsVerified {
+		return "" , errors.New("akun belum ter-verifikasi")
+	}
+
+	// cek password kalau sama
+	err = auth.ComparePassword(user.Password, dto.Password)
+	if err != nil {
+		logrus.Info(err)
+		return "" , errors.New("password yang anda masukkan salah")
+	}
+
+	// buat token paseto
+	acessToken, err := token.CreateToken(user, time.Now().Add(30 * time.Minute))
+	if err != nil {
+		logrus.Info(err)
+		return "" , errors.New("gagal membuat token")
+	}
+
+	refreshToken, err := token.CreateToken(user, time.Now().Add(168 * time.Minute))
+	if err != nil {
+		logrus.Info(err)
+		return "" , errors.New("gagal membuat token")
+	}
+
+	// menyimpan token
+	Token := models.Token{
+		Token: refreshToken,
+		UserID: user.ID,
+		ExpiredAt: time.Now().Add(168 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	err = s.repo.CreateOne(ctx, Token)
+	if err != nil {
+		return "", errors.New("gagal menyimpan token")
+	}
+
+
+	return acessToken, nil
+}
+
+func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPayload) error {
+
+	userID := data.UserID
+
+	err := s.repo.DeleteOne(ctx, userID)
+	if err != nil {
+		logrus.Info(err)
+		return errors.New("gagal menghapus token")
+	}	
+	return nil
 }

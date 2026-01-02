@@ -3,7 +3,7 @@ package mailer
 import (
 	"fmt"
 	"os"
-	"share-notes-app/pkg/utils/config"
+	"share-notes-app/configs"
 
 	"gopkg.in/gomail.v2"
 )
@@ -14,7 +14,7 @@ type Mailer struct {
 	baseUrl string
 }
 
-func NewMailer(config *config.Config) *Mailer {
+func NewMailer(config *configs.Config) *Mailer {
  d := gomail.NewDialer(
 	config.SMTP.Host,
 	config.SMTP.Port,

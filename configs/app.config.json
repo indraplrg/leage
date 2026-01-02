@@ -1,5 +1,5 @@
 {
-  "appName": "share-notes-app",
+  "appName": "leage",
   "baseUrl": "http://localhost:3000",
   "server": {
     "port": 3000
@@ -7,9 +7,7 @@
 
   "database": {
     "host": "localhost",
-    "user": "emotbatu",
     "port": 5432,
-    "databaseName": "share_notes",
     "sslMode": "disable"
   },
 
@@ -17,5 +15,10 @@
     "host": "smtp.gmail.com",
     "port": 587,
     "senderName": "PT. Tertimpa Batu <cherryart319@gmail.com>"
+  },
+
+  "redis": {
+    "host": "localhost",
+    "port": 6379
   }
 }

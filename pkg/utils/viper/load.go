@@ -1,14 +1,15 @@
-package config
+package viper
 
 import (
 	"fmt"
+	"share-notes-app/configs"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-func LoadConfig(logger *logrus.Logger) (*Config ,error) {
+func LoadConfig(logger *logrus.Logger) (*configs.Config ,error) {
 	// load json config
 	viper.SetConfigName("app.config")
 	viper.SetConfigType("json")
@@ -27,7 +28,7 @@ func LoadConfig(logger *logrus.Logger) (*Config ,error) {
 		logger.WithField("config_file", viper.ConfigFileUsed()).Info("Config file loaded")
 	}
 
-	var config Config
+	var config configs.Config
 	if err := viper.Unmarshal(&config); err != nil {
 		logger.WithError(err).Error("Failed unmarshal config")
 		return nil, fmt.Errorf("Failed unmarsahl config: %w", err)

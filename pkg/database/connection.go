@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 	"os"
-	"share-notes-app/pkg/utils/config"
+	"share-notes-app/configs"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -12,14 +12,14 @@ import (
 
 var Db *gorm.DB
 
-func GetDBConnection(config *config.Config, logger *logrus.Logger) (*gorm.DB, error) {
+func GetDBConnection(config *configs.Config, logger *logrus.Logger) (*gorm.DB, error) {
 	// setup connection
 	connStr := fmt.Sprintf("host=%s user=%s password=%s port=%s dbname=%s sslmode=%s", 
 	config.Database.Host, 
-	config.Database.User,
+	os.Getenv("APP_DATABASE_USERNAME"),
 	os.Getenv("APP_DATABASE_PASSWORD"),
 	config.Database.Port,
-	config.Database.DatabaseName,
+	os.Getenv("APP_DATABASE_NAME"),
 	config.Database.SslMode,
 	)
 

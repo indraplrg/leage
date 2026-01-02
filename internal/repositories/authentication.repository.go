@@ -9,9 +9,9 @@ import (
 )
 
 type AuthenticationRepository interface {
-	CreateUser(ctx context.Context, user *models.User) error
-	CreateEmailVerification(ctx context.Context, verification *models.EmailVerification) error
-	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	CreateOne(ctx context.Context, filter any) error
+	FindOne(ctx context.Context, filter map[string]any) (*models.User, error)
+	DeleteOne(ctx context.Context, id string) error
 }
 
 type authenticationRepository struct {
@@ -22,18 +22,20 @@ func NewAuthenticationRepository(db *gorm.DB) AuthenticationRepository {
 	return &authenticationRepository{db:db}
 }
 
-func (r *authenticationRepository) CreateUser(ctx context.Context, user *models.User) error {
-	return r.db.WithContext(ctx).Create(user).Error
+func (r *authenticationRepository) CreateOne(ctx context.Context, filter any) error {
+	return r.db.WithContext(ctx).Create(filter).Error
 }
 
-func (r *authenticationRepository) CreateEmailVerification(ctx context.Context, verification *models.EmailVerification) error {
-	return r.db.WithContext(ctx).Create(verification).Error
-}
-
-func (r *authenticationRepository) FindByEmail(ctx context.Context, email string) (*models.User ,error) {
+func (r *authenticationRepository) FindOne(ctx context.Context, filter map[string]any) (*models.User ,error) {
 	var User models.User
 
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&User).Error; err != nil {
+	tx := r.db.WithContext(ctx)
+
+	for field, value := range filter {
+		tx = tx.Where(field+" = ?", value)
+	}
+
+	if err := tx.First(&User).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -41,4 +43,8 @@ func (r *authenticationRepository) FindByEmail(ctx context.Context, email string
 	}
 
 	return &User, nil
+}
+
+func (r *authenticationRepository) DeleteOne(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Model(&models.Token{}).Where("user_id = ?", id).Error
 }

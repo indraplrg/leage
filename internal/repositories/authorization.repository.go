@@ -5,7 +5,6 @@ import (
 	"errors"
 	"share-notes-app/internal/models"
 
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -24,7 +23,6 @@ func NewAuthorizationRepository(db *gorm.DB) AuthorizationRepositories {
 
 func (r *authorizationRepository) GetToken(ctx context.Context, token string) (*models.EmailVerification ,error)  {
 	var EmailVerification models.EmailVerification 
-	logrus.Info(token, "ini token dari service")
 
 	if err := r.db.WithContext(ctx).Where("token = ?", token).First(&EmailVerification).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -37,7 +35,6 @@ func (r *authorizationRepository) GetToken(ctx context.Context, token string) (*
 }
 
 func (r *authorizationRepository) UpdateOneUsers(ctx context.Context, emailVerify *models.EmailVerification) error {
-	logrus.Info(emailVerify.UserId, "ini id dari tabel email")
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// update user
 		if err := tx.Model(&models.User{}).Where("id = ?", emailVerify.UserId).Update("is_verified", true).Error; err != nil {

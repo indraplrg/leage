@@ -7,5 +7,9 @@ import (
 )
 
 func CreateMigrationTable(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{}, &models.Note{}, &models.EmailVerification{})
+	return db.AutoMigrate(
+		&models.User{}, 
+		&models.Note{}, 
+		&models.EmailVerification{}, 
+		&models.Token{})
 }

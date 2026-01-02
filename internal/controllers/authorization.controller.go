@@ -23,17 +23,15 @@ func (c *AuthorizationController) VerifyEmail(ctx *gin.Context) {
 	
 	ok, err := c.service.VerifyEmail(ctx, token)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, &dtos.Response{
+		ctx.JSON(http.StatusNotFound, &dtos.BaseResponse{
 			Success: false,
 			Message: err.Error(),
-			Data: nil,
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &dtos.Response{
+	ctx.JSON(http.StatusOK, &dtos.BaseResponse{
 		Success: true,
 		Message: ok,
-		Data: nil,
 	})
 }

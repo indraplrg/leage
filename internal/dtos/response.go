@@ -2,14 +2,27 @@ package dtos
 
 import "github.com/google/uuid"
 
-type Response struct {
+type BaseResponse struct {
 	Success bool `json:"success"`
 	Message string `json:"message"`
-	Data interface{}  `json:"data,omitempty"`
 }
 
-type RegisterResponse struct {
+type RegisterData struct {
 	ID uuid.UUID `json:"id"`
 	Username string `json:"username"`
 	Email string `json:"email"`
+}
+
+type RegisterResponse struct {
+	BaseResponse
+	Data *RegisterData `json:"data,omitempty"`
+}
+
+type LoginData struct {
+	AccessToken string `json:"access_token"`
+}
+
+type LoginResponse struct {
+	BaseResponse
+	Data *LoginData `json:"data,omitempty"`
 }

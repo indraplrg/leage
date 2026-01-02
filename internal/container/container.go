@@ -1,11 +1,11 @@
 package container
 
 import (
+	"share-notes-app/configs"
 	"share-notes-app/internal/controllers"
 	"share-notes-app/internal/repositories"
 	"share-notes-app/internal/services"
 	"share-notes-app/pkg/mailer"
-	"share-notes-app/pkg/utils/config"
 
 	"gorm.io/gorm"
 )
@@ -15,10 +15,10 @@ type Container struct {
 	AuthorizationController *controllers.AuthorizationController
 
 	DB *gorm.DB
-	Config *config.Config
+	Config *configs.Config
 }
 
-func NewContainer(db *gorm.DB, config *config.Config) *Container {
+func NewContainer(db *gorm.DB, config *configs.Config) *Container {
 	mailer := mailer.NewMailer(config)
 
 	authRepo := repositories.NewAuthenticationRepository(db)
