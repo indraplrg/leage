@@ -14,7 +14,7 @@ func LoadConfig() (*configs.Config ,error) {
 	viper.SetConfigType("json")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./configs/")
-	viper.AddConfigPath("../../configs/")
+	viper.AddConfigPath("/configs")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

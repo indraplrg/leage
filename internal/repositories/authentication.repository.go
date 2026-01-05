@@ -46,5 +46,5 @@ func (r *authenticationRepository) FindOne(ctx context.Context, filter map[strin
 }
 
 func (r *authenticationRepository) DeleteOne(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Model(&models.Token{}).Where("user_id = ?", id).Error
+	return r.db.WithContext(ctx).Where("user_id = ?", id).Model(&models.Token{}).Error
 }

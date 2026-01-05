@@ -8,11 +8,10 @@ import (
 
 type Note struct {
 	ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserId uuid.UUID `gorm:"type:uuid;not null"`
-	User *User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	UserID uuid.UUID `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;type:uuid;not null"`
 	Title string `gorm:"not null"`
 	Content string
 	IsPublic bool
 	CreatedAt time.Time
-	UpdateTime time.Time
+	UpdateAt time.Time
 }

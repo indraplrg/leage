@@ -11,9 +11,9 @@ type User struct {
 	Username string `gorm:"unique;not null"`
 	Email string `gorm:"unique;not null"`
 	Password string `gorm:"not null"`
-	Notes *[]Note `gorm:"foreignKey:UserId"`
 	CreatedAt time.Time
 	IsVerified bool `gorm:"default:false"`
-	RefreshToken *Token `gorm:"foreignKey:UserId"`
-	Verifications *[]EmailVerification `gorm:"foreignKey:UserId"`
+	Notes []Note `gorm:"foreignKey:UserID"`
+	RefreshToken *Token `gorm:"foreignKey:UserID"`
+	Verifications []EmailVerification `gorm:"foreignKey:UserID"`
 }

@@ -15,5 +15,6 @@ func AuthenticationRoute(r *gin.Engine, controller *controllers.AuthenticationCo
 		group.POST("/register", controller.Register)
 		group.POST("/login", controller.Login)
 		group.POST("/logout", middleware.VerifyToken() ,controller.Logout)
+		group.POST("/resend-token")
 	}
 }

@@ -13,6 +13,7 @@ import (
 type Container struct {
 	AuthController *controllers.AuthenticationController
 	AuthorizationController *controllers.AuthorizationController
+	NoteController *controllers.NoteController
 
 	DB *gorm.DB
 	Config *configs.Config
@@ -29,9 +30,14 @@ func NewContainer(db *gorm.DB, config *configs.Config) *Container {
 	authorizationsService := services.NewAuthorizationsService(authorizationRepo)
 	authorizationController := controllers.NewAuthorizationsController(authorizationsService)
 
+	noteRepo := repositories.NewNoteRepository(db)
+	noteService := services.NewNoteService(noteRepo)
+	noteController := controllers.NewNoteController(noteService)
+
 	return &Container{
 		AuthController: authController,
 		AuthorizationController: authorizationController,
+		NoteController: noteController,
 
 		DB: db,
 		Config: config,

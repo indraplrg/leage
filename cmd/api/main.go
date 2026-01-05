@@ -7,7 +7,7 @@ import (
 	"share-notes-app/internal/routes"
 	"share-notes-app/pkg/cache"
 	"share-notes-app/pkg/database"
-	"share-notes-app/pkg/utils/viper"
+	"share-notes-app/pkg/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

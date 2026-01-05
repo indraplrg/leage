@@ -26,3 +26,8 @@ type LoginResponse struct {
 	BaseResponse
 	Data *LoginData `json:"data,omitempty"`
 }
+
+type NoteResponse struct {
+	Title string `json:"title"`
+	Content string `json:"content"`
+}

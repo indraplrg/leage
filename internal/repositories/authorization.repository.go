@@ -37,7 +37,7 @@ func (r *authorizationRepository) GetToken(ctx context.Context, token string) (*
 func (r *authorizationRepository) UpdateOneUsers(ctx context.Context, emailVerify *models.EmailVerification) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// update user
-		if err := tx.Model(&models.User{}).Where("id = ?", emailVerify.UserId).Update("is_verified", true).Error; err != nil {
+		if err := tx.Model(&models.User{}).Where("id = ?", emailVerify.UserID).Update("is_verified", true).Error; err != nil {
 			return err
 		}
 

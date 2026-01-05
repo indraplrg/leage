@@ -69,7 +69,7 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserReque
 
 	// buat verifikasi email
 	emailVerification := &models.EmailVerification{
-		UserId: User.ID,
+		UserID: User.ID,
 		Token: uuid.NewString(),
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 		CreatedAt: time.Now(),
@@ -132,7 +132,7 @@ func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest
 	}
 
 	// menyimpan token
-	Token := models.Token{
+	Token := &models.Token{
 		Token: refreshToken,
 		UserID: user.ID,
 		ExpiredAt: time.Now().Add(168 * time.Minute),
@@ -160,3 +160,37 @@ func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPaylo
 	}	
 	return nil
 }
+
+// func (s *authenticationService) ResendToken(ctx context.Context, data *dtos.ResendTokenRequest) error {
+	
+// 	// Cek akun kalau terdaftar
+// 	existing, err := s.repo.FindOne(ctx, map[string]any{
+// 		"email": data.Email,
+// 	})
+
+// 	if err != nil {
+// 		logrus.WithError(err)
+// 		return errors.New("gagal mengecek user")
+// 	}
+
+// 	if existing == nil {
+// 		return errors.New("Email belum terdaftar!")
+// 	}
+
+// 	if existing.IsVerified {
+// 		return errors.New("Email telah terverifikasi!")
+// 	}
+
+// 	// Ambil token
+// 	token, err := s.repo.FindOne(ctx, map[string]any{
+// 		"user_id": existing.ID,
+// 	})
+
+
+// 	if err := s.mailer.SendVerification(data.Email, token); err != nil {
+// 		logrus.WithError(err)
+// 		return errors.New("gagal mengirim email verifikasi")
+// 	}
+	
+// 	return nil
+// }

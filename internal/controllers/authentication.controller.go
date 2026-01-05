@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type AuthenticationController struct {
@@ -114,7 +113,6 @@ func (c *AuthenticationController) Logout(ctx *gin.Context) {
 	
 	// Ambil payload dari context
 	auth, ok := ctx.MustGet("auth").(*dtos.AuthPayload)
-	logrus.Info(auth, ok)
 	if !ok {
 		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
 			Success: false,
@@ -148,4 +146,20 @@ func (c *AuthenticationController) Logout(ctx *gin.Context) {
 		Success: true,
 		Message: "Logout successfully",
 	})
+}
+
+func (c *AuthenticationController) ResendToken(ctx *gin.Context) {
+	var req dtos.ResendTokenRequest
+	
+	// ambil request body
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, dtos.BaseResponse{
+				Success: false,
+				Message: err.Error(),
+			},
+		)
+		return
+	}
+
+	
 }
