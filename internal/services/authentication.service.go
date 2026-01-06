@@ -17,8 +17,8 @@ import (
 
 type AuthenticationService interface {
 	Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error)
-	Login(ctx context.Context, dto dtos.LoginRequest) (string, error)
-	Logout(ctx context.Context, data *dtos.AuthPayload) error
+	Login(ctx context.Context, dto dtos.LoginRequest) (*dtos.LoginData, error)
+	Logout(ctx context.Context, data *dtos.AuthPayload) (error)
 }
 
 type authenticationService struct {
@@ -91,7 +91,7 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserReque
 	return User, nil
 }
 
-func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest) (string, error) {
+func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest) (*dtos.LoginData, error) {
 
 	// cek akun kalau terdaftar
 	user, err := s.repo.FindOne(ctx, map[string]any{
@@ -100,53 +100,61 @@ func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest
 
 	if err != nil {
 		logrus.WithError(err)
-		return "" ,	errors.New("gagal mengecek user")
+		return nil ,	errors.New("gagal mengecek user")
 	}
 
 	if user == nil {
-		return "" , errors.New("account not found!")
+		return nil , errors.New("account not found!")
 	}
 
 	if !user.IsVerified {
-		return "" , errors.New("akun belum ter-verifikasi")
+		return nil , errors.New("akun belum ter-verifikasi")
 	}
 
 	// cek password kalau sama
 	err = auth.ComparePassword(user.Password, dto.Password)
 	if err != nil {
 		logrus.WithError(err)
-		return "" , errors.New("password yang anda masukkan salah")
+		return nil , errors.New("password yang anda masukkan salah")
 	}
 
 	// buat token paseto
-	acessToken, err := token.CreateToken(user, time.Now().Add(30 * time.Minute))
+	acessToken, err := token.CreateToken(user.Username, user.ID.String(), time.Now().Add(30 * time.Minute))
 	if err != nil {
 		logrus.WithError(err)
-		return "" , errors.New("gagal membuat token")
+		return nil , errors.New("gagal membuat token")
 	}
 
-	refreshToken, err := token.CreateToken(user, time.Now().Add(168 * time.Minute))
+	refreshToken, err := token.CreateToken(user.Username, user.ID.String(), time.Now().Add(168 * time.Hour))
 	if err != nil {
 		logrus.WithError(err)
-		return "" , errors.New("gagal membuat token")
+		return nil , errors.New("gagal membuat token")
 	}
 
-	// menyimpan token
+	// Hashing refresh token
+	hashedRefreshToken, err := auth.HashingPassword(refreshToken)
+	if err != nil {
+		logrus.WithError(err)
+		return nil, errors.New("gagal meng-hashing token")
+	}
+
+	// membuat model token
 	Token := &models.Token{
-		Token: refreshToken,
+		Token: string(hashedRefreshToken),
 		UserID: user.ID,
 		ExpiredAt: time.Now().Add(168 * time.Minute),
 		CreatedAt: time.Now(),
 	}
 
+	// menyimpan token
 	err = s.repo.CreateOne(ctx, Token)
 	if err != nil {
 		logrus.WithError(err)
-		return "", errors.New("gagal menyimpan token")
+		return nil, errors.New("gagal menyimpan token")
 	}
 
 
-	return acessToken, nil
+	return &dtos.LoginData{AccessToken: acessToken, RefreshToken: refreshToken}, nil
 }
 
 func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPayload) error {

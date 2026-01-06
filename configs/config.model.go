@@ -3,6 +3,7 @@ package configs
 type Config struct {
 	AppName string `mapstructure:"appName"`
 	BaseUrl string `mapstructure:"baseUrl"`
+	Host string `mapstructure:"host"`
 
 	Server struct {
 		Port int `mapstructure:"port"`

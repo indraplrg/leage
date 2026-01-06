@@ -2,20 +2,19 @@ package token
 
 import (
 	"os"
-	"share-notes-app/internal/models"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
 )
 
-func CreateToken(data *models.User, exp time.Time) (string, error) {
+func CreateToken(username, userID string, exp time.Time) (string, error) {
 	token := paseto.NewToken()
 	
 	token.SetIssuer("leage")
-	token.SetSubject(data.ID.String())
-	token.SetString("username", data.Username)
-	token.SetString("user_id", data.ID.String())
+	token.SetSubject(userID)
+	token.SetString("username", username)
+	token.SetString("user_id", userID)
 	token.SetJti(uuid.NewString())
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())

@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"net/http"
+	"share-notes-app/helper"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/services"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -86,17 +86,9 @@ func (c *AuthenticationController) Login(ctx *gin.Context) {
 		return 
 	}
 
-	ctx.SetCookieData(&http.Cookie{
-		Name : "paseto_token", 
-		Value: token, 
-		Expires: time.Now().Add(2 * time.Hour),
-		MaxAge: 7200, 
-		Path: "/", 
-		Domain: "localhost", 
-		Secure: false, 
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	// set cookie
+	helper.SetCookie(ctx, "access_paseto_token", token.AccessToken, 30*60)
+	helper.SetCookie(ctx, "refresh_paseto_token", token.RefreshToken, 168*3600)
 
 	ctx.JSON(http.StatusOK, dtos.LoginResponse{
 		BaseResponse: dtos.BaseResponse{
@@ -104,7 +96,7 @@ func (c *AuthenticationController) Login(ctx *gin.Context) {
 			Message: "login successfully",
 		},
 		Data: &dtos.LoginData{
-			AccessToken: token,
+			AccessToken: token.AccessToken,
 		},
 	})
 }
@@ -130,17 +122,9 @@ func (c *AuthenticationController) Logout(ctx *gin.Context) {
 		return
 	}
 
-		ctx.SetCookieData(&http.Cookie{
-		Name : "paseto_token", 
-		Value: "", 
-		Expires: time.Now().Add(1 * time.Second),
-		MaxAge: -1, 
-		Path: "/", 
-		Domain: "localhost", 
-		Secure: false, 
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	// hapus cookie
+	helper.DeleteCookie(ctx, "access_paseto_token")
+	helper.DeleteCookie(ctx, "refresh_paseto_token")
 
 	ctx.JSON(http.StatusOK, dtos.BaseResponse{
 		Success: true,

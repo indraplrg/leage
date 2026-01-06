@@ -1,5 +1,6 @@
 {
   "appName": "leage",
+  "host": "localhost",
   "baseUrl": "http://localhost:3000",
   "server": {
     "port": 3000

@@ -20,6 +20,7 @@ type RegisterResponse struct {
 
 type LoginData struct {
 	AccessToken string `json:"access_token"`
+	RefreshToken string
 }
 
 type LoginResponse struct {
