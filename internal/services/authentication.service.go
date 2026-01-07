@@ -145,7 +145,7 @@ func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest
 	}
 
 	// menyimpan token
-	err = s.repo.CreateOne(ctx, Token)
+	err = s.repo.UpdateRefreshToken(ctx, Token)
 	if err != nil {
 		logrus.WithError(err)
 		return nil, errors.New("gagal menyimpan token")

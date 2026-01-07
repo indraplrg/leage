@@ -15,6 +15,7 @@ type AuthenticationRepository interface {
 	GetToken(ctx context.Context, token string) (*models.EmailVerification ,error)
 	UpdateOneUsers(ctx context.Context, emailVerify *models.EmailVerification) error
 	FindRefreshToken(ctx context.Context, filter map[string]any) (*models.Token, error)
+	UpdateRefreshToken(ctx context.Context, token *models.Token) error
 }
 
 type authenticationRepository struct {
@@ -100,6 +101,20 @@ func (r *authenticationRepository) FindRefreshToken(ctx context.Context, filter 
 	return &token, nil
 }
 
+func (r *authenticationRepository) UpdateRefreshToken(ctx context.Context, token *models.Token) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id", token.UserID).Delete(&models.Token{}).Error; err != nil {
+			return err
+		} 
+		
+		if err := tx.Create(token).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func (r *authenticationRepository) DeleteOne(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Where("user_id = ?", id).Delete(&models.Token{}).Error
 }
+
