@@ -19,6 +19,8 @@ type AuthenticationService interface {
 	Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error)
 	Login(ctx context.Context, dto dtos.LoginRequest) (*dtos.LoginData, error)
 	Logout(ctx context.Context, data *dtos.AuthPayload) (error)
+	VerifyEmail(ctx context.Context, token string) (string, error)
+	ValidateRefreshToken(ctx context.Context, userID, refreshToken string) (bool, error)
 }
 
 type authenticationService struct {
@@ -132,17 +134,13 @@ func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest
 	}
 
 	// Hashing refresh token
-	hashedRefreshToken, err := auth.HashingPassword(refreshToken)
-	if err != nil {
-		logrus.WithError(err)
-		return nil, errors.New("gagal meng-hashing token")
-	}
+	hashedRefreshToken := auth.HasingRefreshToken(refreshToken)
 
 	// membuat model token
 	Token := &models.Token{
 		Token: string(hashedRefreshToken),
 		UserID: user.ID,
-		ExpiredAt: time.Now().Add(168 * time.Minute),
+		ExpiredAt: time.Now().Add(168 * time.Hour),
 		CreatedAt: time.Now(),
 	}
 
@@ -167,6 +165,66 @@ func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPaylo
 		return errors.New("gagal menghapus token")
 	}	
 	return nil
+}
+
+func (s *authenticationService) VerifyEmail(ctx context.Context, token string) (string, error) {
+
+	// cek token kalau ada
+	emailVerify, err := s.repo.GetToken(ctx, token)
+
+	if err != nil {
+		logrus.WithError(err)
+		return "", errors.New("gagal mengambil token")
+	}
+
+	if emailVerify == nil {
+		return "", errors.New("token tidak ditemukan")
+	}
+
+	if emailVerify.IsUsed {
+		return "", errors.New("token sudah digunakan")
+	}
+
+	if time.Now().After(emailVerify.ExpiresAt) {
+		return "", errors.New("token sudah kadaluarsa")
+	}
+
+
+	// update status verifikasi
+	err = s.repo.UpdateOneUsers(ctx, emailVerify)
+	if err != nil {
+		logrus.WithError(err)
+		return "", errors.New("gagal mengupdate status")
+	} 
+
+	return "berhasil meng-update status verifikasi", nil
+}
+
+func (s *authenticationService) ValidateRefreshToken(ctx context.Context, userID, refreshToken string) (bool, error) {
+	// hash refresh token
+	hashedRefreshToken := auth.HasingRefreshToken(refreshToken)
+
+	// ambil refresh token dari db
+	tokenFromDB, err := s.repo.FindRefreshToken(ctx, map[string]any{
+		"token": hashedRefreshToken,
+	})
+
+	// validasi
+	if err != nil {
+		logrus.WithError(err)
+		return false, errors.New("gagal mengambil refresh token")
+	}
+
+	if tokenFromDB == nil {
+		return false, errors.New("refresh token tidak ditemukan")
+	}
+
+	if time.Now().After(tokenFromDB.ExpiredAt) {
+		_ = s.repo.DeleteOne(ctx, userID)
+		return false, errors.New("refresh token tidak valid")
+	}
+
+	return true, nil
 }
 
 // func (s *authenticationService) ResendToken(ctx context.Context, data *dtos.ResendTokenRequest) error {
@@ -202,3 +260,4 @@ func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPaylo
 	
 // 	return nil
 // }
+

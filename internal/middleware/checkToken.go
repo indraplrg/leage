@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"share-notes-app/helper"
+	"share-notes-app/internal/container"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/pkg/token"
 	"time"
@@ -12,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func VerifyToken() gin.HandlerFunc {
+func VerifyToken(container *container.Container) gin.HandlerFunc {
 	return func (c *gin.Context)  {
 		// Ambil header authoriaztion
 		accesstoken, err := helper.GetCookie(c, "access_paseto_token")
@@ -60,7 +62,7 @@ func VerifyToken() gin.HandlerFunc {
 		}
 
 		if time.Now().After(exp) {
-			handleRefresh(c)	
+			handleRefresh(c, container)	
 			return
 		}
 
@@ -80,7 +82,7 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
-func handleRefresh(c *gin.Context) {
+func handleRefresh(c *gin.Context, container *container.Container) {
 	refreshToken, err := helper.GetCookie(c,"refresh_paseto_token")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -129,6 +131,17 @@ func handleRefresh(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.BaseResponse{
 			Success: false,
 			Message: "invalid refresh token payload",
+		})
+		return
+	}
+
+	// Validasi token kalau sama
+	ctx := context.Background()
+	ok, err := container.AuthService.ValidateRefreshToken(ctx, userID, refreshToken)
+	if err != nil || !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.BaseResponse{
+			Success: false,
+			Message: "invalid refresh token, please login again",
 		})
 		return
 	}

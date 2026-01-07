@@ -8,7 +8,7 @@ import (
 
 func DeleteCookie(c *gin.Context, name string) {
 	c.SetCookieData(&http.Cookie{
-		Name : "paseto_token", 
+		Name : name, 
 		Value: "", 
 		MaxAge: -1, 
 		Path: "/", 

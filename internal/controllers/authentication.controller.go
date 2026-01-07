@@ -76,13 +76,11 @@ func (c *AuthenticationController) Login(ctx *gin.Context) {
 
 	// login
 	token, err := c.service.Login(ctx, req); if err != nil {
-		ctx.JSON(http.StatusBadRequest, dtos.LoginResponse{
-			BaseResponse: dtos.BaseResponse{
+		ctx.JSON(http.StatusBadRequest, dtos.BaseResponse{
 				Success: false,
 				Message: err.Error(),
 			},
-			Data: nil,
-		})
+		)
 		return 
 	}
 
@@ -146,4 +144,22 @@ func (c *AuthenticationController) ResendToken(ctx *gin.Context) {
 	}
 
 	
+}
+
+func (c *AuthenticationController) VerifyEmail(ctx *gin.Context) {
+	token := ctx.Param("token")
+	
+	ok, err := c.service.VerifyEmail(ctx, token)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, &dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &dtos.BaseResponse{
+		Success: true,
+		Message: ok,
+	})
 }
