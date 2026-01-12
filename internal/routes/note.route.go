@@ -8,6 +8,11 @@ import (
 )
 
 func NoteRoute(r *gin.Engine, c *container.Container) {
+	general := r.Group("/api")
+	{
+		general.GET("/get-all-notes", c.NoteController.GetAllNotes)
+	}
+	
 	protected := r.Group("/api")
 	protected.Use(middleware.VerifyToken(c))
 	{

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"math"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/models"
 	"share-notes-app/internal/repositories"
@@ -14,6 +15,7 @@ import (
 
 type NoteService interface {
 	CreateNote(ctx context.Context, dto dtos.NoteRequest, tokenPayload *dtos.AuthPayload) (*models.Note, error)
+	GetAllNotes(ctx context.Context, page, limit int) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
 }
 
 type noteService struct {
@@ -40,7 +42,7 @@ func (s *noteService) CreateNote(ctx context.Context, dto dtos.NoteRequest, toke
 		Content: dto.Content,
 		IsPublic: true,
 		CreatedAt: time.Now(),
-		UpdateAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	//  Simpan ke database
@@ -52,3 +54,50 @@ func (s *noteService) CreateNote(ctx context.Context, dto dtos.NoteRequest, toke
 
 	return Note, nil
 }
+
+func (s *noteService) GetAllNotes(ctx context.Context, page, limit int) ([]dtos.NoteResponse, dtos.PaginationMeta, error) {
+	// validasi 
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+	
+	// hitung offset
+	offset := (page - 1) * limit
+
+
+	notes, total, err := s.repo.GetAllNotes(ctx, true, offset, limit)
+	if err != nil {
+		logrus.Info(err)
+		return nil, dtos.PaginationMeta{}, errors.New("gagal mengambil note") 
+	}
+
+	noteDTOs := make([]dtos.NoteResponse, 0, len(notes))
+	for _, n := range notes {
+		noteDTOs = append(noteDTOs, dtos.NoteResponse{
+			ID: n.ID.String(),
+			Title: n.Title,
+			Content: n.Content,
+			User: dtos.UserResponse{
+				ID: n.UserID,
+				Username: n.User.Username,
+				Email: n.User.Email,
+				CreatedAt: n.User.CreatedAt,
+			},
+		})
+	} 
+
+	// hitung meta
+	totalPage := int(math.Ceil(float64(total) / float64(limit)))
+	meta := dtos.PaginationMeta{
+		Page: page,
+		Limit: limit,
+		TotalData: total,
+		TotalPage: totalPage,
+	}
+
+	return noteDTOs, meta, nil
+} 

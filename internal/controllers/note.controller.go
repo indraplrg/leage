@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/services"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -52,8 +53,27 @@ func (c *NoteController) CreateNote(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, dtos.NoteResponse{
+	ctx.JSON(http.StatusCreated, dtos.NoteCreatedResponse{
 		Title: note.Title,
 		Content: note.Content,
+	})
+}
+
+func (c *NoteController) GetAllNotes(ctx *gin.Context) {
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	notes, meta, err := c.service.GetAllNotes(ctx, page, limit)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
+			Success: false,
+			Message: "gagal mengambil note",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dtos.NoteListResponse{
+		Notes: notes,
+		Paginations: meta,
 	})
 }

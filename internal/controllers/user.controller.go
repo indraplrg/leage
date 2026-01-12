@@ -19,7 +19,7 @@ func NewAuthenticationController(service services.AuthenticationService) *Authen
 
 
 func (c *AuthenticationController) Register(ctx *gin.Context) {
-	var req dtos.UserRequest
+	var req dtos.UserRegisterRequest
 
 	// ambil request body
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -60,7 +60,7 @@ func (c *AuthenticationController) Register(ctx *gin.Context) {
 }
 
 func (c *AuthenticationController) Login(ctx *gin.Context) {
-	var req dtos.LoginRequest
+	var req dtos.UserLoginRequest
 	
 	// ambil request body
 	if err := ctx.ShouldBindJSON(&req); err != nil {

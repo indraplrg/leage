@@ -16,8 +16,8 @@ import (
 )
 
 type AuthenticationService interface {
-	Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error)
-	Login(ctx context.Context, dto dtos.LoginRequest) (*dtos.LoginData, error)
+	Register(ctx context.Context, dto dtos.UserRegisterRequest) (*models.User, error)
+	Login(ctx context.Context, dto dtos.UserLoginRequest) (*dtos.LoginData, error)
 	Logout(ctx context.Context, data *dtos.AuthPayload) (error)
 	VerifyEmail(ctx context.Context, token string) (string, error)
 	ValidateRefreshToken(ctx context.Context, userID, refreshToken string) (bool, error)
@@ -32,7 +32,7 @@ func NewAuthencticationService(repo repositories.AuthenticationRepository, maile
 	return &authenticationService{repo:repo, mailer:mailer}
 }
 
-func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRequest) (*models.User, error) {
+func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRegisterRequest) (*models.User, error) {
 	
 	// cek email kalau terdaftar
 	existing, err := s.repo.FindOne(ctx, map[string]any{
@@ -93,7 +93,7 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserReque
 	return User, nil
 }
 
-func (s *authenticationService) Login(ctx context.Context, dto dtos.LoginRequest) (*dtos.LoginData, error) {
+func (s *authenticationService) Login(ctx context.Context, dto dtos.UserLoginRequest) (*dtos.LoginData, error) {
 
 	// cek akun kalau terdaftar
 	user, err := s.repo.FindOne(ctx, map[string]any{
