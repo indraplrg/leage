@@ -81,6 +81,9 @@ func (s *noteService) GetAllNotes(ctx context.Context, page, limit int) ([]dtos.
 			ID: n.ID.String(),
 			Title: n.Title,
 			Content: n.Content,
+			IsPublic: n.IsPublic,
+			CreatedAt: n.CreatedAt,
+			UpdatedAt: n.UpdatedAt,
 			User: dtos.UserResponse{
 				ID: n.UserID,
 				Username: n.User.Username,

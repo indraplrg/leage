@@ -31,12 +31,12 @@ func (r *noteRepository) GetAllNotes(ctx context.Context, status bool, offset, l
 	tx := r.db.WithContext(ctx)
 	
 	// query data 
-	if err := tx.Joins("User").Where("is_public = ?", true).Order("notes.id ASC").Limit(limit).Offset(offset).Find(&notes).Error; err != nil {
+	if err := tx.Joins("User").Where("is_public = ?", status).Order("notes.id ASC").Limit(limit).Offset(offset).Find(&notes).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// query total
-	if err := tx.Model(&models.Note{}).Where("is_public = ?", true).Count(&total).Error; err != nil {
+	if err := tx.Model(&models.Note{}).Where("is_public = ?", status).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 

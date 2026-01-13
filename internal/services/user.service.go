@@ -60,6 +60,7 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRegis
 		Email: dto.Email,
 		Username: dto.Username,
 		Password: string(hashedPassword),
+		IsVerified: false,
 	}
 
 	err = s.repo.CreateOne(ctx, User)
@@ -75,6 +76,7 @@ func (s *authenticationService) Register(ctx context.Context, dto dtos.UserRegis
 		Token: uuid.NewString(),
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 		CreatedAt: time.Now(),
+		IsUsed: false,
 	}
 
 	err = s.repo.CreateOne(ctx, emailVerification)
