@@ -17,6 +17,7 @@ type NoteService interface {
 	CreateNote(ctx context.Context, dto dtos.NoteRequest, tokenPayload *dtos.AuthPayload) (*models.Note, error)
 	GetAllNotes(ctx context.Context, page, limit int) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
 	GetUserNotes(ctx context.Context, page, limit int, tokenPayload *dtos.AuthPayload) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
+	GetOneNote(ctx context.Context, noteID string) (*models.Note, error)
 }
 
 type noteService struct {
@@ -121,7 +122,7 @@ func (s *noteService) GetUserNotes(ctx context.Context, page, limit int, tokenPa
 
 	notes, total, err := s.repo.GetUserNotes(ctx, tokenPayload.UserID, limit, offset)
 	if err != nil {
-		logrus.Info(err)
+		logrus.WithError(err)
 		return nil, dtos.PaginationMeta{}, errors.New("gagal mengambil notes") 
 	}
 
@@ -153,4 +154,14 @@ func (s *noteService) GetUserNotes(ctx context.Context, page, limit int, tokenPa
 	}
 
 	return noteDTOs, meta, nil 
+}
+
+func (s *noteService) GetOneNote(ctx context.Context, noteID string) (*models.Note, error) {
+	note, err := s.repo.GetOneNote(ctx, noteID)
+	if err != nil {
+		logrus.WithError(err)
+		return nil, errors.New("note tidak ditemukan")
+	}
+
+	return note, nil
 }

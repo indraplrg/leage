@@ -11,6 +11,7 @@ type NoteRepositories interface {
 	CreateNote(ctx context.Context, entity *models.Note) error
 	FilteringGetAllNotes(ctx context.Context, status bool, offset, limit int) ([]models.Note, int64, error)
 	GetUserNotes(ctx context.Context, userID string, limit, offset int) ([]models.Note, int64, error)
+	GetOneNote(ctx context.Context, noteID string) (*models.Note, error)
 }
 
 type noteRepository struct {
@@ -62,3 +63,15 @@ func (r *noteRepository) GetUserNotes(ctx context.Context, userID string, limit,
 
 	return notes, total, nil	
 }
+
+func (r *noteRepository) GetOneNote(ctx context.Context, noteID string) (*models.Note, error) {
+	var note *models.Note
+	tx := r.db.WithContext(ctx)
+
+	if err := tx.Preload("User").Where("id = ?", noteID).First(&note).Error; err != nil {
+		return nil, err
+	}
+
+	return note, nil
+}
+

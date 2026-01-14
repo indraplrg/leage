@@ -106,3 +106,30 @@ func (c *NoteController) GetUserNotes(ctx *gin.Context) {
 		Paginations: meta,
 	})
 }
+
+func (c *NoteController) GetOneNote(ctx *gin.Context) {
+	noteID := ctx.Param("id")
+	
+	note, err := c.service.GetOneNote(ctx, noteID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	ctx.JSON(http.StatusOK, dtos.NoteResponse{
+		ID: note.ID.String(),
+		Title: note.Title,
+		Content: note.Content,
+		IsPublic: note.IsPublic,
+		CreatedAt: note.CreatedAt,
+		UpdatedAt: note.UpdatedAt,
+		User: dtos.UserResponse{
+			ID: note.UserID,
+			Username: note.User.Username,
+			Email: note.User.Email,
+			CreatedAt: note.User.CreatedAt,
+		},
+	})
+}
