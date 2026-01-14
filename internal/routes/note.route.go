@@ -17,5 +17,6 @@ func NoteRoute(r *gin.Engine, c *container.Container) {
 	protected.Use(middleware.VerifyToken(c))
 	{
 		protected.POST("/create-note", c.NoteController.CreateNote)
+		protected.GET("/get-user-notes", c.NoteController.GetUserNotes)
 	}
 }

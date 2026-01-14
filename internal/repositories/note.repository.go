@@ -9,7 +9,8 @@ import (
 
 type NoteRepositories interface {
 	CreateNote(ctx context.Context, entity *models.Note) error
-	GetAllNotes(ctx context.Context, status bool, offset, limit int) ([]models.Note, int64, error)
+	FilteringGetAllNotes(ctx context.Context, status bool, offset, limit int) ([]models.Note, int64, error)
+	GetUserNotes(ctx context.Context, userID string, limit, offset int) ([]models.Note, int64, error)
 }
 
 type noteRepository struct {
@@ -24,7 +25,7 @@ func (r *noteRepository) CreateNote(ctx context.Context, entity *models.Note) er
 	return r.db.WithContext(ctx).Create(entity).Error	
 }
 
-func (r *noteRepository) GetAllNotes(ctx context.Context, status bool, offset, limit int) ([]models.Note, int64, error) {
+func (r *noteRepository) FilteringGetAllNotes(ctx context.Context, status bool, offset, limit int) ([]models.Note, int64, error) {
 	var notes []models.Note
 	var total int64
 
@@ -41,4 +42,23 @@ func (r *noteRepository) GetAllNotes(ctx context.Context, status bool, offset, l
 	}
 
 	return notes, total, nil
+}
+
+func (r *noteRepository) GetUserNotes(ctx context.Context, userID string, limit, offset int) ([]models.Note, int64, error) {
+	var notes []models.Note
+	var total int64
+
+	tx := r.db.WithContext(ctx)
+	
+	// query data 
+	if err := tx.Joins("User").Where("user_id = ?", userID).Order("notes.id ASC").Limit(limit).Offset(offset).Find(&notes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// query total
+	if err := tx.Model(&models.Note{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return notes, total, nil	
 }

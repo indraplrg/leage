@@ -77,3 +77,32 @@ func (c *NoteController) GetAllNotes(ctx *gin.Context) {
 		Paginations: meta,
 	})
 }
+
+func (c *NoteController) GetUserNotes(ctx *gin.Context) {
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+	auth, ok := ctx.MustGet("auth").(*dtos.AuthPayload)
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
+			Success: false,
+			Message: "internal server error",
+		})
+		return
+	}
+
+
+	notes, meta, err := c.service.GetUserNotes(ctx, page, limit, auth)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dtos.NoteListResponse{
+		Notes: notes,
+		Paginations: meta,
+	})
+}
