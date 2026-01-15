@@ -10,12 +10,12 @@ import (
 
 func AuthenticationRoute(r *gin.Engine, c *container.Container) {
 
-	group := r.Group("/api/auth")
+	general := r.Group("/api/auth")
 	{
-		group.POST("/register", c.AuthController.Register)
-		group.POST("/login", c.AuthController.Login)
-		group.POST("/resend-token")
-		group.GET("/verify-email/:token", c.AuthController.VerifyEmail)
+		general.POST("/register", c.AuthController.Register)
+		general.POST("/login", c.AuthController.Login)
+		general.POST("/resend-token")
+		general.GET("/verify-email/:token", c.AuthController.VerifyEmail)
 	}
 	
 	protected := r.Group("/api/auth")

@@ -1,13 +1,15 @@
 package controllers
 
 import (
+	"errors"
+	"share-notes-app/pkg/apperror"
+
 	"net/http"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/services"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type NoteController struct {
@@ -20,7 +22,6 @@ func NewNoteController(service services.NoteService) *NoteController {
 
 func (c *NoteController) CreateNote(ctx *gin.Context) {
 	var req dtos.NoteRequest
-	logrus.Info(req)
 
 	// Ambil body request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -131,5 +132,47 @@ func (c *NoteController) GetOneNote(ctx *gin.Context) {
 			Email: note.User.Email,
 			CreatedAt: note.User.CreatedAt,
 		},
+	})
+}
+
+func (c *NoteController) UpdateNote(ctx *gin.Context) {
+	var req dtos.UpdateNoteRequest
+
+	// Ambil body request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest,dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		},
+	)
+	return
+}
+
+	// Ambil parameter id
+	noteID := ctx.Param("id")
+
+	// update note
+	updatedNote, err := c.service.UpdateNote(ctx, noteID, req)
+	if err != nil {
+		if errors.Is(err, apperror.ErrNoteNotFound) {
+			ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
+				Success: false,
+				Message: "note tidak ditemukan",
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
+			Success: false,
+			Message: "internal server error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dtos.NoteUpdatedResponse{
+		NoteCreatedResponse: dtos.NoteCreatedResponse{
+			Title: updatedNote.Title,
+			Content: updatedNote.Content,
+		},
+		IsPublic: updatedNote.IsPublic,
 	})
 }

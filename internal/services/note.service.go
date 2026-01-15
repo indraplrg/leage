@@ -7,10 +7,12 @@ import (
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/models"
 	"share-notes-app/internal/repositories"
+	"share-notes-app/pkg/apperror"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type NoteService interface {
@@ -18,6 +20,7 @@ type NoteService interface {
 	GetAllNotes(ctx context.Context, page, limit int) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
 	GetUserNotes(ctx context.Context, page, limit int, tokenPayload *dtos.AuthPayload) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
 	GetOneNote(ctx context.Context, noteID string) (*models.Note, error)
+	UpdateNote(ctx context.Context, noteID string, req dtos.UpdateNoteRequest) (*models.Note, error)
 }
 
 type noteService struct {
@@ -33,7 +36,7 @@ func (s *noteService) CreateNote(ctx context.Context, dto dtos.NoteRequest, toke
 	userIDString := tokenPayload.UserID
 	parseUUID, err := uuid.Parse(userIDString) 
 	if err != nil {
-		logrus.WithError(err)
+		logrus.Info(err)
 		return nil, errors.New("gagal parsing string ke uuid")
 	}
 
@@ -50,7 +53,7 @@ func (s *noteService) CreateNote(ctx context.Context, dto dtos.NoteRequest, toke
 	//  Simpan ke database
 	err = s.repo.CreateNote(ctx, Note) 
 	if err != nil {
-		logrus.WithError(err)
+		logrus.Info(err)
 		return nil, errors.New("gagal membuat note")
 	}
 
@@ -122,7 +125,7 @@ func (s *noteService) GetUserNotes(ctx context.Context, page, limit int, tokenPa
 
 	notes, total, err := s.repo.GetUserNotes(ctx, tokenPayload.UserID, limit, offset)
 	if err != nil {
-		logrus.WithError(err)
+		logrus.Info(err)
 		return nil, dtos.PaginationMeta{}, errors.New("gagal mengambil notes") 
 	}
 
@@ -159,9 +162,37 @@ func (s *noteService) GetUserNotes(ctx context.Context, page, limit int, tokenPa
 func (s *noteService) GetOneNote(ctx context.Context, noteID string) (*models.Note, error) {
 	note, err := s.repo.GetOneNote(ctx, noteID)
 	if err != nil {
-		logrus.WithError(err)
-		return nil, errors.New("note tidak ditemukan")
+		logrus.Info(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("note tidak ditemukan")
+		}
+
+		return nil, err
 	}
 
 	return note, nil
+}
+func (s *noteService) UpdateNote(ctx context.Context, noteID string, req dtos.UpdateNoteRequest) (*models.Note, error) {
+	note, err := s.repo.GetOneNote(ctx, noteID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperror.ErrNoteNotFound
+		}
+
+		logrus.Info(err)
+		return nil, err
+	}
+
+	// update note
+	note.Title = req.Title
+	note.Content = req.Content
+	note.IsPublic = req.IsPublic
+
+	// simpan 
+	if err := s.repo.UpdateNote(ctx, note); err != nil {
+		logrus.Info(err)
+		return nil, err
+	}
+
+	return note, nil	
 }

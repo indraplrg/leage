@@ -12,6 +12,7 @@ type NoteRequest struct {
 
 type UpdateNoteRequest struct {
 	NoteRequest
+	IsPublic bool `json:"is_public"`
 }
 
 // response
@@ -22,6 +23,7 @@ type NoteCreatedResponse struct {
 
 type NoteUpdatedResponse struct {
 	NoteCreatedResponse
+	IsPublic bool `json:"is_public"`
 }
 
 type NoteResponse struct {
