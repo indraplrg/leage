@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"errors"
-	"share-notes-app/pkg/apperror"
-
 	"net/http"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/services"
@@ -148,22 +145,26 @@ func (c *NoteController) UpdateNote(ctx *gin.Context) {
 	return
 }
 
+	// ambil payload token
+	auth, ok := ctx.MustGet("auth").(*dtos.AuthPayload)
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
+			Success: false,
+			Message: "internal server error",
+		})
+		return
+	}
+
 	// Ambil parameter id
 	noteID := ctx.Param("id")
 
 	// update note
-	updatedNote, err := c.service.UpdateNote(ctx, noteID, req)
+	updatedNote, err := c.service.UpdateNote(ctx, noteID, req, auth)
 	if err != nil {
-		if errors.Is(err, apperror.ErrNoteNotFound) {
-			ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
-				Success: false,
-				Message: "note tidak ditemukan",
-			})
-			return
-		}
 		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
 			Success: false,
-			Message: "internal server error",
+			Message: err.Error(),
 		})
 		return
 	}
