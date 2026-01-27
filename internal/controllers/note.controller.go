@@ -162,7 +162,7 @@ func (c *NoteController) UpdateNote(ctx *gin.Context) {
 	// update note
 	updatedNote, err := c.service.UpdateNote(ctx, noteID, req, auth)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
+		ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
 			Success: false,
 			Message: err.Error(),
 		})
@@ -175,5 +175,24 @@ func (c *NoteController) UpdateNote(ctx *gin.Context) {
 			Content: updatedNote.Content,
 		},
 		IsPublic: updatedNote.IsPublic,
+	})
+}
+
+func (c *NoteController) DeleteNote(ctx *gin.Context) {
+	// Ambil parameter id
+	noteID := ctx.Param("id")
+
+	// hapus note
+	if err := c.service.DeleteNote(ctx, noteID); err != nil {
+		ctx.JSON(http.StatusNotFound, dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	
+	ctx.JSON(http.StatusOK, dtos.BaseResponse{
+		Success: true,
+		Message: "Note deleted successfully",
 	})
 }

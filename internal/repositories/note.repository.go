@@ -13,6 +13,7 @@ type NoteRepositories interface {
 	GetUserNotes(ctx context.Context, userID string, limit, offset int) ([]models.Note, int64, error)
 	GetOneNote(ctx context.Context, noteID string) (*models.Note, error)
 	UpdateNote(ctx context.Context, updateField *models.Note) error
+	DeleteNote(ctx context.Context, targetNote *models.Note) error
 }
 
 type noteRepository struct {
@@ -78,4 +79,8 @@ func (r *noteRepository) GetOneNote(ctx context.Context, noteID string) (*models
 
 func (r *noteRepository) UpdateNote(ctx context.Context, updateField *models.Note) error {
 	return r.db.WithContext(ctx).Save(updateField).Error;
+}
+
+func (r *noteRepository) DeleteNote(ctx context.Context, targetNote *models.Note) error {
+	return r.db.WithContext(ctx).Delete(&targetNote).Error
 }

@@ -21,6 +21,7 @@ type NoteService interface {
 	GetUserNotes(ctx context.Context, page, limit int, tokenPayload *dtos.AuthPayload) ([]dtos.NoteResponse, dtos.PaginationMeta, error)
 	GetOneNote(ctx context.Context, noteID string) (*models.Note, error)
 	UpdateNote(ctx context.Context, noteID string, req dtos.UpdateNoteRequest, tokenPayload *dtos.AuthPayload) (*models.Note, error)
+	DeleteNote(ctx context.Context, noteID string) (error)
 }
 
 type noteService struct {
@@ -173,7 +174,10 @@ func (s *noteService) GetOneNote(ctx context.Context, noteID string) (*models.No
 	return note, nil
 }
 func (s *noteService) UpdateNote(ctx context.Context, noteID string, req dtos.UpdateNoteRequest, tokenPayload *dtos.AuthPayload) (*models.Note, error) {
+	// ambil userID dari payload
 	userID := tokenPayload.UserID
+
+	// cari note
 	note, err := s.repo.GetOneNote(ctx, noteID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -184,7 +188,7 @@ func (s *noteService) UpdateNote(ctx context.Context, noteID string, req dtos.Up
 		return nil, apperror.Internal()
 	}
 
-	// ownership validation
+	// ownership validasi
 	if note.UserID.String() != userID {
 		return nil, apperror.Failed("update note")
 	}
@@ -201,4 +205,24 @@ func (s *noteService) UpdateNote(ctx context.Context, noteID string, req dtos.Up
 	}
 
 	return note, nil	
+}
+
+func (s *noteService) DeleteNote(ctx context.Context, noteID string) (error) {
+	// cari/ambil note
+	note, err := s.repo.GetOneNote(ctx, noteID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return apperror.NotFound("note")
+		}
+
+		logrus.Info(err)
+		return apperror.Internal()
+	}
+
+	err = s.repo.DeleteNote(ctx, note)
+	if err != nil {
+		return apperror.Failed("delete Note")
+	}
+
+	return nil
 }

@@ -20,5 +20,6 @@ func NoteRoute(r *gin.Engine, c *container.Container) {
 		protected.POST("/create-note", c.NoteController.CreateNote)
 		protected.GET("/get-user-notes", c.NoteController.GetUserNotes)
 		protected.PATCH("/update-note/:id", c.NoteController.UpdateNote)
+		protected.DELETE("/delete-note/:id", c.NoteController.DeleteNote)
 	}
 }
