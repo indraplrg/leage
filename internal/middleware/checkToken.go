@@ -8,10 +8,12 @@ import (
 	"share-notes-app/internal/container"
 	"share-notes-app/internal/dtos"
 	"share-notes-app/pkg/token"
+	"strings"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func VerifyToken(container *container.Container) gin.HandlerFunc {
@@ -38,31 +40,21 @@ func VerifyToken(container *container.Container) gin.HandlerFunc {
 
 		parser := paseto.NewParser()
 		parser.AddRule(paseto.IssuedBy("leage"))
-		parser.AddRule(paseto.ValidAt(time.Now()))
 		
 		// Validasi Token
 		parsedToken, err := parser.ParseV4Public(publicKey, accesstoken, nil)
 		
 		if err != nil {
+			if strings.Contains(err.Error(), "expired") {
+				logrus.Info("token expire bro!!!")
+				handleRefresh(c, container)
+				return
+			}
+
 			c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.BaseResponse{
 				Success: false,
 				Message: "invalid token",
 			})
-			return
-		}
-
-		exp, err := parsedToken.GetExpiration()
-		if err != nil {
-			// Token tidak punya expiration field (aneh, tapi handle tetap)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.BaseResponse{
-				Success: false,
-				Message: "invalid token expiration",
-			})
-			return
-		}
-
-		if time.Now().After(exp) {
-			handleRefresh(c, container)	
 			return
 		}
 
@@ -157,7 +149,7 @@ func handleRefresh(c *gin.Context, container *container.Container) {
 	}
 
 	// set access token baru
-	helper.SetCookie(c, "access_paseto_token", newAccessToken, 30*60)
+	helper.SetCookie(c, "access_paseto_token", newAccessToken, 168*3600)
 
 	c.Set("auth", &dtos.AuthPayload{
 			UserID: userID,

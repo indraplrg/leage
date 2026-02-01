@@ -85,7 +85,7 @@ func (c *AuthenticationController) Login(ctx *gin.Context) {
 	}
 
 	// set cookie
-	helper.SetCookie(ctx, "access_paseto_token", token.AccessToken, 30*60)
+	helper.SetCookie(ctx, "access_paseto_token", token.AccessToken, 168*3600)
 	helper.SetCookie(ctx, "refresh_paseto_token", token.RefreshToken, 168*3600)
 
 	ctx.JSON(http.StatusOK, dtos.LoginResponse{
