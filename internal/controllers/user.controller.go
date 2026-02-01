@@ -99,8 +99,34 @@ func (c *AuthenticationController) Login(ctx *gin.Context) {
 	})
 }
 
+func (c *AuthenticationController) Profile(ctx *gin.Context) {
+	// Ambil payload dari context
+	auth, ok := ctx.MustGet("auth").(*dtos.AuthPayload)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, dtos.BaseResponse{
+			Success: false,
+			Message: "internal server error",
+		})
+		return
+	} 
+
+	user, err := c.service.Profile(ctx, auth)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, dtos.BaseResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	ctx.JSON(http.StatusOK, dtos.UserResponse{
+		ID: user.ID,
+		Username: user.Username,
+		Email: user.Email,
+		CreatedAt: user.CreatedAt,
+	})
+}
+
 func (c *AuthenticationController) Logout(ctx *gin.Context) {
-	
 	// Ambil payload dari context
 	auth, ok := ctx.MustGet("auth").(*dtos.AuthPayload)
 	if !ok {

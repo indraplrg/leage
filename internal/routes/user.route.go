@@ -21,6 +21,7 @@ func AuthenticationRoute(r *gin.Engine, c *container.Container) {
 	protected := r.Group("/api/auth")
 	protected.Use(middleware.VerifyToken(c))
 	{
+		protected.GET("/profile", c.AuthController.Profile)
 		protected.POST("/logout" ,c.AuthController.Logout)
 
 	}

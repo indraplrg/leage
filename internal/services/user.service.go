@@ -6,6 +6,7 @@ import (
 	"share-notes-app/internal/dtos"
 	"share-notes-app/internal/models"
 	"share-notes-app/internal/repositories"
+	"share-notes-app/pkg/apperror"
 	"share-notes-app/pkg/auth"
 	"share-notes-app/pkg/mailer"
 	"share-notes-app/pkg/token"
@@ -18,6 +19,7 @@ import (
 type AuthenticationService interface {
 	Register(ctx context.Context, dto dtos.UserRegisterRequest) (*models.User, error)
 	Login(ctx context.Context, dto dtos.UserLoginRequest) (*dtos.LoginData, error)
+	Profile(ctx context.Context, payload *dtos.AuthPayload) (*models.User, error)
 	Logout(ctx context.Context, data *dtos.AuthPayload) (error)
 	VerifyEmail(ctx context.Context, token string) (string, error)
 	ValidateRefreshToken(ctx context.Context, userID, refreshToken string) (bool, error)
@@ -155,6 +157,24 @@ func (s *authenticationService) Login(ctx context.Context, dto dtos.UserLoginReq
 
 
 	return &dtos.LoginData{AccessToken: acessToken, RefreshToken: refreshToken}, nil
+}
+
+func (s *authenticationService) Profile(ctx context.Context, payload *dtos.AuthPayload) (*models.User, error) {
+	userID := payload.UserID
+	user, err := s.repo.FindOne(ctx, map[string]any{
+		"id" : userID,
+	})
+
+	if err != nil {
+		logrus.WithError(err)
+		return nil, apperror.Failed("check User")
+	}
+
+	if user == nil {
+		return nil, apperror.NotFound("User")
+	} 
+
+	return user, nil
 }
 
 func (s *authenticationService) Logout(ctx context.Context, data *dtos.AuthPayload) error {
